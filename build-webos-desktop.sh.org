@@ -46,9 +46,7 @@ else
 fi
 
 
-#export BASE="${HOME}/luna-desktop-binaries"
-export STARTDIR="${PWD}"
-export BASE="${STARTDIR}/.."
+export BASE="${HOME}/luna-desktop-binaries"
 export ROOTFS="${BASE}/rootfs"
 export LUNA_STAGING="${BASE}/staging"
 mkdir -p ${BASE}/tarballs
@@ -705,11 +703,8 @@ function build_mojomail
 ##############################
 function build_luna-sysmgr
 {
-#    if [ ! -d $BASE/luna-sysmgr ] || [ ! -e $BASE/luna-sysmgr/desktop-support/com.palm.luna.json.prv ] ; then
-#        do_fetch openwebos/luna-sysmgr $1 luna-sysmgr
-#    fi
-    if [ ! -d $BASE/luna-sysmgr ] ; then
-    	git clone git@github.com:phoenix0428/luna-sysmgr.git $BASE/luna-sysmgr
+    if [ ! -d $BASE/luna-sysmgr ] || [ ! -e $BASE/luna-sysmgr/desktop-support/com.palm.luna.json.prv ] ; then
+        do_fetch openwebos/luna-sysmgr $1 luna-sysmgr
     fi
 
     ##### To build from your local clone of luna-sysmgr, change the following line to "cd" to your clone's location
@@ -1234,11 +1229,8 @@ set -x
 #fi
 
 export LSM_TAG="0.901"
-#if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
-#    do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
-#fi
-if [ ! -d $BASE/luna-sysmgr ] ; then
-	git clone git@github.com:phoenix0428/luna-sysmgr.git $BASE/luna-sysmgr
+if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
+    do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
 if [ -d $BASE/luna-sysmgr ] ; then
     rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp

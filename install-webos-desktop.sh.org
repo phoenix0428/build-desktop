@@ -25,9 +25,7 @@
 
 set -x
 
-#export BASE="${HOME}/luna-desktop-binaries"
-export STARTDIR="${PWD}"
-export BASE="${STARTDIR}/.."
+export BASE="${HOME}/luna-desktop-binaries"
 export ROOTFS="${BASE}/rootfs"
 
 if [ "$1" = "--help" ] ; then

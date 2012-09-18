@@ -19,9 +19,7 @@
 
 set -x
 
-#BASE="${HOME}/luna-desktop-binaries"
-STARTDIR="${PWD}"
-BASE="${STARTDIR}/.."
+BASE="${HOME}/luna-desktop-binaries"
 ROOTFS="${BASE}/rootfs"
 LUNA_STAGING="${BASE}/staging"
 
