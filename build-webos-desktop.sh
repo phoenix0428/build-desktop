@@ -436,7 +436,10 @@ function build_luna-prefs
 ################################# 
 function build_luna-sysservice 
 {
-    do_fetch openwebos/luna-sysservice $1 luna-sysservice
+    #do_fetch openwebos/luna-sysservice $1 luna-sysservice
+    if [ ! -d $BASE/luna-sysservice ] ; then
+    	git clone git@github.com:phoenix0428/luna-sysservice.git $BASE/luna-sysservice
+    fi    
 
     ##### To build from your local clone of luna-sysservice, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysservice

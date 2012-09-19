@@ -139,7 +139,9 @@ hubd_monitor() {
 
 #########################################################
 
-BASE="${HOME}/luna-desktop-binaries"
+#BASE="${HOME}/luna-desktop-binaries"
+STARTDIR="${PWD}"
+BASE="${STARTDIR}/.."
 ROOTFS="${BASE}/rootfs"
 LUNA_STAGING="${BASE}/staging"
 STAGING_DIR="${LUNA_STAGING}"
@@ -162,7 +164,7 @@ if [ ! -f "${ROOTFS}/etc/ls2/ls-public.conf" ] || grep -qs dbus ${ROOTFS}/etc/ls
 fi
 
 
-SRC_DIR="${HOME}/luna-desktop-binaries/luna-sysmgr/desktop-support"
+SRC_DIR="${BASE}/luna-sysmgr/desktop-support"
 #LOGGING="--pmloglib"
 
 export LD_PRELOAD=/lib/i386-linux-gnu/libSegFault.so
