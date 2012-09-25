@@ -1,19 +1,5 @@
 #!/bin/bash
 
-STARTDIR=$PWD
-
-# get the directory of PROJECT_ROOT
-while [ "$PWD" != "/" -a "$PROJECT_ROOT" = "" ] ; do
-    if [ -d ./build-desktop ] ; then
-        PROJECT_ROOT=$PWD
-    else
-        cd ..
-    fi
-done
-
-echo $PROJECT_ROOT
-
-export PROJECT_ROOT=$PROJECT_ROOT
 export BASE="$PROJECT_ROOT"
 export ROOTFS="${BASE}/rootfs"
 export LUNA_STAGING="${BASE}/staging"
@@ -33,6 +19,8 @@ else
   export CMAKE="cmake"
 fi
 
+export PROCCOUNT=$(grep -c processor /proc/cpuinfo)
+
 export WEBKIT_DIR="WebKit"
 
 function fail
@@ -41,3 +29,4 @@ function fail
     echo $1
     exit 1
 }
+

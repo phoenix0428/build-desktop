@@ -2,6 +2,32 @@
 # download
 # test downloading sources of openwebos
 
+if [ "$1" = "clean" ] ; then
+    export SKIPSTUFF=0
+    set -e
+elif [ -n "$1" ] ; then
+    echo "Parameter $1 not recognized"
+    exit
+else
+    export SKIPSTUFF=1
+    set -e
+fi
+
+STARTDIR=$PWD
+
+# get the directory of PROJECT_ROOT
+while [ "$PWD" != "/" -a "$PROJECT_ROOT" = "" ] ; do
+    if [ -d ./build-desktop ] ; then
+        PROJECT_ROOT=$PWD
+    else
+        cd ..
+    fi
+done
+
+echo $PROJECT_ROOT
+export PROJECT_ROOT=$PROJECT_ROOT
+
+cd $STARTDIR
 . scripts/common/envsetup.sh
 
 #GITHUB_DEFAULTUSER="openwebos"
@@ -61,29 +87,43 @@ jemalloc:openwebos/jemalloc:tag:submissions/11
 filecache:openwebos/filecache:tag:submissions/54
 mojomail:openwebos/app-services:tag:1.03
 "
+
+
+function pretty_print
+{
+    echo ""
+    echo "+++++++++++++++++++++++++++++++"
+    echo building $1
+    echo "+++++++++++++++++++++++++++++++"
+    echo ""
+}
+
 ########################################
 # Parameters:
-#   $1 "$REPO:$USER:$BRANCH"
+#   $1 the name of the distination folder, ex: cjson
+#   $2 the component within repository, ex: openwebos/cjson
+#   $3 the name of the branch
 #
 ########################################
 function download_repo
 {
-    REPO=$(echo $1 | awk -F: '{print $1}')
-    USER=$(echo $1 | awk -F: '{print $2}')
-    if [ "$USER" = "" ] ; then
-        USER="openwebos"
-    fi
+    TARGET_DIR=$1
+    REPO=$2
+    BRANCH=$3
+
     BRANCH_ARGS=""
-    BRANCH=$(echo $1 | awk -F: '{print $3}')
     if [ "$BRANCH" != "" ] ; then
         BRANCHARG="-b ${BRANCH}"
     fi
-    if [ ! -d $BASE/$REPO ] ; then
-        echo Cloning $USER/$REPO.git into $BASE/$REPO
-        git clone $BRANCHARG git@github.com:$USER/$REPO.git $BASE/$REPO            
-        [ "$?" == "0" ] || fail "Failed to checkout: $REPO"
+    if [ ! -d $BASE/$TARGET_DIR ] ; then
+        echo Cloning $REPO.git into $BASE/$TARGET_DIR
+        git clone $BRANCHARG git@github.com:$REPO.git $BASE/$TARGET_DIR
+        if [ "$?" != "0" ] ; then
+            rm -rf $BASE/$TARGET_DIR
+            fail "Failed to checkout: $REPO --> $TARGET_DIR"
+        fi
     else
-        echo found $BASE/$REPO
+        echo found $BASE/$TARGET_DIR
     fi
 }
 
@@ -128,9 +168,9 @@ function download_tag
 
     if [ -e ${ZIPFILE} -a -d ${BASE}/${TARGET_DIR} ] ; then
         echo "SKIP DOWNLOAD: ${REPO}#${TAG} is already downloaded"
-        exit 0
+        return 0
     else
-        rm -rf ./${TARGET_DIR}
+        rm -rf ${BASE}/${TARGET_DIR}
     fi
 
     if [ ! -e ${ZIPFILE} ] ; then
@@ -172,6 +212,7 @@ function download_cmake
     [ "$?" == "0" ] || fail "Failed to unzip: cmake"
     
     export CMAKE="${BASE}/cmake/bin/cmake"
+    cd ..
 }
 
 ########################################
@@ -192,15 +233,81 @@ function download
             REPO=$(echo $CURRENT | awk -F: '{print $2}')
             TAG=$(echo $CURRENT | awk -F: '{print $4}')
             download_tag $TARGET_DIR $REPO $TAG
-        #elif [ "${TYPE}" = "repo" ] ; then
-        #    # download from git-repo
-        #    download_repo $CURRENT
-        fi        
+        elif [ "${TYPE}" = "repo" ] ; then
+            # download from git-repo
+            TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
+            REPO=$(echo $CURRENT | awk -F: '{print $2}')
+            BRANCH=$(echo $CURRENT | awk -F: '{print $4}')
+            download_repo $TARGET_DIR $REPO $BRANCH
+        fi
     done
 }
 
+function build
+{
+    cd ${BASE}/build-desktop/scripts
+    
+    for CURRENT in $GIT_SRC ; do
+        TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
+        if [ -x ./build_$TARGET_DIR.sh ] ; then
+            pretty_print $TARGET_DIR
+            ./build_$TARGET_DIR.sh $TARGET_DIR $PROCCOUNT
+            [ "$?" == "0" ] || fail "Failed to build: $TARGET_DIR"
+        else
+            echo No build script for $TARGET_DIR
+        fi
+    done
+
+    cd ..
+}
+
+# make directories for downloading and staging
 mkdir -p ${BASE}/tarballs
 mkdir -p ${LUNA_STAGING}
 
+mkdir -p $LUNA_STAGING/lib
+mkdir -p $LUNA_STAGING/bin
+mkdir -p $LUNA_STAGING/include
+
+mkdir -p ${ROOTFS}/etc/ls2
+mkdir -p ${ROOTFS}/etc/palm
+mkdir -p ${ROOTFS}/etc/palm/db_kinds
+mkdir -p ${ROOTFS}/etc/palm/db/kinds
+mkdir -p ${ROOTFS}/etc/palm/db/permissions
+mkdir -p ${ROOTFS}/etc/palm/activities
+# NOTE: desktop ls2 .conf files will look for services in /usr/share/ls2/*services
+# NOTE: but on device they live in /usr/share/dbus-1/*services (which is used by Ubuntu dbus)
+# NOTE: To avoid problems, we'll symlink from the dbus-1 path in $ROOTFS, but our install
+# NOTE: script only links from /usr/share/ls2, which is where our ls2 conf files need to look.
+#mkdir -p ${ROOTFS}/share/dbus-1/system-services
+#mkdir -p ${ROOTFS}/share/dbus-1/services
+mkdir -p ${ROOTFS}/usr/share/dbus-1
+ln -sf -T ${ROOTFS}/usr/share/ls2/system-services ${ROOTFS}/usr/share/dbus-1/system-services
+ln -sf -T ${ROOTFS}/usr/share/ls2/services ${ROOTFS}/usr/share/dbus-1/services
+
+# NOTE: desktop ls2 .conf files will look for roles in /usr/share/ls2/roles (which is linked to $ROOTFS)
+mkdir -p ${ROOTFS}/usr/share/ls2/roles/prv
+mkdir -p ${ROOTFS}/usr/share/ls2/roles/pub
+mkdir -p ${ROOTFS}/usr/share/ls2/system-services
+mkdir -p ${ROOTFS}/usr/share/ls2/services
+
+# binaries go in /usr/lib/luna so service and role files will match
+# yes, it should have been called /usr/bin/luna
+mkdir -p ${ROOTFS}/usr/lib/luna
+# run-js-service needs to export LD_LIBRARY_PATH for nodejs; it shall export /usr/lib/luna/lib
+ln -sf -T ${LUNA_STAGING}/lib ${ROOTFS}/usr/lib/luna/lib
+mkdir -p ${ROOTFS}/usr/lib/luna/system/luna-systemui
+mkdir -p ${ROOTFS}/usr/palm/nodejs
+mkdir -p ${ROOTFS}/usr/palm/public/accounts
+mkdir -p ${ROOTFS}/usr/palm/services
+mkdir -p ${ROOTFS}/usr/palm/smartkey
+mkdir -p ${LUNA_STAGING}/var/file-cache
+mkdir -p ${ROOTFS}/var/db
+mkdir -p ${ROOTFS}/var/luna
+mkdir -p ${ROOTFS}/var/palm
+mkdir -p ${ROOTFS}/var/usr/palm
+#set -x
+
 download
+build
 
