@@ -63,27 +63,27 @@ mojomail:openwebos/app-services:tag:1.03
 "
 ########################################
 # Parameters:
-#   $1 "$REPO:$USER:$BRANCH"
+#   $1 the name of the distination folder, ex: cjson
+#   $2 the component within repository, ex: openwebos/cjson
+#   $3 the name of the branch
 #
 ########################################
 function download_repo
 {
-    REPO=$(echo $1 | awk -F: '{print $1}')
-    USER=$(echo $1 | awk -F: '{print $2}')
-    if [ "$USER" = "" ] ; then
-        USER="openwebos"
-    fi
+    TARGET_DIR=$1
+    REPO=$2
+    BRANCH=$3
+
     BRANCH_ARGS=""
-    BRANCH=$(echo $1 | awk -F: '{print $3}')
     if [ "$BRANCH" != "" ] ; then
         BRANCHARG="-b ${BRANCH}"
     fi
-    if [ ! -d $BASE/$REPO ] ; then
-        echo Cloning $USER/$REPO.git into $BASE/$REPO
-        git clone $BRANCHARG git@github.com:$USER/$REPO.git $BASE/$REPO            
-        [ "$?" == "0" ] || fail "Failed to checkout: $REPO"
+    if [ ! -d $BASE/$TARGET_DIR ] ; then
+        echo Cloning $REPO.git into $BASE/$TARGET_DIR
+        git clone $BRANCHARG git@github.com:$REPO.git $BASE/$TARGET_DIR            
+        [ "$?" == "0" ] || fail "Failed to checkout: $REPO --> $TARGET_DIR"
     else
-        echo found $BASE/$REPO
+        echo found $BASE/$TARGET_DIR
     fi
 }
 
@@ -192,15 +192,38 @@ function download
             REPO=$(echo $CURRENT | awk -F: '{print $2}')
             TAG=$(echo $CURRENT | awk -F: '{print $4}')
             download_tag $TARGET_DIR $REPO $TAG
-        #elif [ "${TYPE}" = "repo" ] ; then
-        #    # download from git-repo
-        #    download_repo $CURRENT
-        fi        
+        elif [ "${TYPE}" = "repo" ] ; then
+            # download from git-repo
+            TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
+            REPO=$(echo $CURRENT | awk -F: '{print $2}')
+            BRANCH=$(echo $CURRENT | awk -F: '{print $4}')
+            download_repo $TARGET_DIR $REPO $BRANCH
+        fi
     done
 }
 
+function build
+{
+    cd ./scripts
+    
+    for CURRENT in $GIT_SRC ; do
+        TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
+        if [ -x ./build_$TARGET_DIR.sh ] ; then
+            pretty_print $TARGET_DIR
+            ./build_$TARGET_DIR.sh $TARGET_DIR $PROCCOUNT
+            [ "$?" == "0" ] || fail "Failed to build: $TARGET_DIR"
+        else
+            echo No build script for $TARGET_DIR
+        fi
+    done
+
+    cd ..
+}
+
+# make directories for downloading and staging
 mkdir -p ${BASE}/tarballs
 mkdir -p ${LUNA_STAGING}
 
 download
+build
 

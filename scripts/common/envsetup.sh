@@ -33,6 +33,8 @@ else
   export CMAKE="cmake"
 fi
 
+export PROCCOUNT=$(grep -c processor /proc/cpuinfo)
+
 export WEBKIT_DIR="WebKit"
 
 function fail
@@ -41,3 +43,4 @@ function fail
     echo $1
     exit 1
 }
+
