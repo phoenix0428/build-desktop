@@ -37,7 +37,8 @@ MY_GITHUB="phoenix0428"
 
 # 1) "$TARGET_DIR:$USER/$REPO:repo:$BRANCH"
 # 2) "$TARGET_DIR:$USER/$REPO:tag:$TAG"
-# * The default value of $USER is "openwebos"
+# * The default value of $USER is "openwebos".
+# * the line followed by "#" is ignored.
 GIT_SRC="
 cmake-modules-webos:openwebos/cmake-modules-webos:tag:submissions/9
 cjson:openwebos/cjson:tag:submissions/35
@@ -55,7 +56,7 @@ luna-sysmgr:phoenix0428/luna-sysmgr:repo
 luna-prefs:openwebos/luna-prefs:tag:0.91
 luna-sysservice:phoenix0428/luna-sysservice:repo
 librolegen:openwebos/librolegen:tag:submissions/16
-serviceinstaller:openwebos/serviceinstaller:tag:0.90
+#serviceinstaller:openwebos/serviceinstaller:tag:0.90
 luna-universalsearchmgr:openwebos/luna-universalsearchmgr:tag:0.91
 luna-applauncher:openwebos/luna-applauncher:tag:0.90
 luna-systemui:openwebos/luna-systemui:tag:0.90
@@ -225,6 +226,10 @@ function download
     
     # download the sources from git-repo
     for CURRENT in $GIT_SRC ; do
+        # ignore 
+        if [ "${CURRENT:0:1}" = "#" ] ; then
+            continue
+        fi
         # check type
         TYPE=$(echo $CURRENT | awk -F: '{print $3}')
         if [ "${TYPE}" = "tag" ] ; then
@@ -248,6 +253,9 @@ function build
     cd ${BASE}/build-desktop/scripts
     
     for CURRENT in $GIT_SRC ; do
+        if [ "${CURRENT:0:1}" = "#" ] ; then
+            continue
+        fi
         TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
         if [ -x ./build_$TARGET_DIR.sh ] ; then
             pretty_print $TARGET_DIR
