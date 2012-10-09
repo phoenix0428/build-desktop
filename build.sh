@@ -13,22 +13,11 @@ else
     set -e
 fi
 
-STARTDIR=$PWD
-
-# get the directory of PROJECT_ROOT
-while [ "$PWD" != "/" -a "$PROJECT_ROOT" = "" ] ; do
-    if [ -d ./build-desktop ] ; then
-        PROJECT_ROOT=$PWD
-    else
-        cd ..
-    fi
-done
-
-echo $PROJECT_ROOT
-export PROJECT_ROOT=$PROJECT_ROOT
-
-cd $STARTDIR
+# include the common environment
 . scripts/common/envsetup.sh
+
+export STARTDIR=$PWD
+cd $STARTDIR
 
 #GITHUB_DEFAULTUSER="openwebos"
 MY_GITHUB="phoenix0428"
@@ -52,8 +41,10 @@ luna-webkit-api:openwebos/luna-webkit-api:tag:0.90
 WebKit:isis-project/WebKit:tag:0.3
 luna-sysmgr-ipc:openwebos/luna-sysmgr-ipc:tag:0.90
 luna-sysmgr-ipc-messages:openwebos/luna-sysmgr-ipc-messages:tag:0.90
+#luna-sysmgr:openwebos/luna-sysmgr:tag:0.901
 luna-sysmgr:phoenix0428/luna-sysmgr:repo
 luna-prefs:openwebos/luna-prefs:tag:0.91
+#luna-sysservice:openwebos/luna-sysservice:tag:0.92
 luna-sysservice:phoenix0428/luna-sysservice:repo
 librolegen:openwebos/librolegen:tag:submissions/16
 #serviceinstaller:openwebos/serviceinstaller:tag:0.90

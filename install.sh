@@ -25,10 +25,8 @@
 
 set -x
 
-#export BASE="${HOME}/luna-desktop-binaries"
-export STARTDIR="${PWD}"
-export BASE="${STARTDIR}/.."
-export ROOTFS="${BASE}/rootfs"
+# include the common environment
+. scripts/common/envsetup.sh
 
 if [ "$1" = "--help" ] ; then
     echo "Usage: sudo ./install-luna-sysmgr.sh [OPTION]"

@@ -37,3 +37,4 @@ cp -f desktop-support/com.palm.smtp.json.prv $ROOTFS/usr/share/ls2/roles/prv/com
 cp -f desktop-support/com.palm.imap.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.imap.service
 cp -f desktop-support/com.palm.pop.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.pop.service
 cp -f desktop-support/com.palm.smtp.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.smtp.service
+

@@ -19,11 +19,8 @@
 
 set -x
 
-#BASE="${HOME}/luna-desktop-binaries"
-STARTDIR="${PWD}"
-BASE="${STARTDIR}/.."
-ROOTFS="${BASE}/rootfs"
-LUNA_STAGING="${BASE}/staging"
+# include the common environment
+. scripts/common/envsetup.sh
 
 STAGING_DIR="${LUNA_STAGING}"
 BIN_DIR="${STAGING_DIR}/bin"
