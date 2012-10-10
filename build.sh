@@ -2,17 +2,6 @@
 # download
 # test downloading sources of openwebos
 
-if [ "$1" = "clean" ] ; then
-    export SKIPSTUFF=0
-    set -e
-elif [ -n "$1" ] ; then
-    echo "Parameter $1 not recognized"
-    exit
-else
-    export SKIPSTUFF=1
-    set -e
-fi
-
 # include the common environment
 . scripts/common/envsetup.sh
 
@@ -80,8 +69,13 @@ filecache:openwebos/filecache:tag:submissions/54
 mojomail:openwebos/app-services:tag:1.03
 "
 
+build_usage()
+{
+    echo options:
+    echo " -t [NAME]  : Builds only named target"
+}
 
-function pretty_print
+pretty_print()
 {
     echo ""
     echo "+++++++++++++++++++++++++++++++"
@@ -221,18 +215,16 @@ function download
         if [ "${CURRENT:0:1}" = "#" ] ; then
             continue
         fi
-        # check type
+        TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
+        REPO=$(echo $CURRENT | awk -F: '{print $2}')
         TYPE=$(echo $CURRENT | awk -F: '{print $3}')
+        # check type        
         if [ "${TYPE}" = "tag" ] ; then
             # download from git-tag
-            TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
-            REPO=$(echo $CURRENT | awk -F: '{print $2}')
             TAG=$(echo $CURRENT | awk -F: '{print $4}')
             download_tag $TARGET_DIR $REPO $TAG
         elif [ "${TYPE}" = "repo" ] ; then
             # download from git-repo
-            TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
-            REPO=$(echo $CURRENT | awk -F: '{print $2}')
             BRANCH=$(echo $CURRENT | awk -F: '{print $4}')
             download_repo $TARGET_DIR $REPO $BRANCH
         fi
@@ -259,6 +251,49 @@ function build
 
     cd ..
 }
+
+if [ "$1" = "clean" ] ; then
+    export SKIPSTUFF=0
+    set -e
+elif [ -n "$1" ] ; then
+    TEMP_TARGET=""
+    # check opts
+    while getopts t: options
+    do
+        case "$options" in
+        t)
+            TARGET_NAME=$OPTARG
+            for CURRENT in $GIT_SRC ; do
+                # ignore 
+                if [ "${CURRENT:0:1}" = "#" ] ; then
+                    continue
+                fi
+                # check target name
+                TARGET_DIR=$(echo $CURRENT | awk -F: '{print $1}')
+                if [ "${TARGET_DIR}" = "${TARGET_NAME}" ] ; then
+                    TEMP_TARGET=$CURRENT
+                    echo "building target: ${TEMP_TARGET}"
+                    break
+                fi
+            done;;
+        [?])
+            build_usage
+            exit -1;;
+        esac
+    done
+    if [ "$TEMP_TARGET" = "" ] ; then
+        echo "Invalid options !!"
+        build_usage
+        exit -1
+    else
+        GIT_SRC=$TEMP_TARGET
+    fi
+    export SKIPSTUFF=1
+    set -e
+else
+    export SKIPSTUFF=1
+    set -e
+fi
 
 # make directories for downloading and staging
 mkdir -p ${BASE}/tarballs
